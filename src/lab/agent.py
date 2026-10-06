@@ -3,11 +3,15 @@
 Pseudo-code: guides/pseudocode/01_agent.md
 Kiểm tra:    pytest tests/test_02_agent.py
 """
+import os
+import shutil
+import subprocess
 import sys
 from pathlib import Path
 
 from deepagents import create_deep_agent
 from deepagents.backends import LocalShellBackend
+from deepagents.backends.protocol import ExecuteResponse
 
 from .model import make_model
 from .subagents import get_subagents
@@ -48,12 +52,76 @@ def make_backend(sandbox: Path):
       - Tác tử chạy được lệnh shell và gọi được `python` (cần đặt PATH).
       - KHÔNG chuyển biến môi trường của bạn vào shell của tác tử (khóa API không được lộ).
     """
+    python_dir = str(Path(sys.executable).parent)
+    if sys.platform == "win32":
+        git_root = _git_for_windows_root()
+        if git_root is not None:
+            # cmd.exe has no cat/ls/which/env, so use the POSIX sh that ships with Git for Windows.
+            env = {
+                "PATH": os.pathsep.join([python_dir, str(git_root / "usr" / "bin"), str(git_root / "bin")]),
+                "HOME": str(sandbox),
+                "PYTHONDONTWRITEBYTECODE": "1",
+                "SYSTEMROOT": os.environ.get("SYSTEMROOT", r"C:\Windows"),   # Python and MSYS need it to start
+            }
+            return _PosixShellBackend(root_dir=sandbox, virtual_mode=True, inherit_env=False, env=env, timeout=120,
+                                      sh=str(git_root / "usr" / "bin" / "sh.exe"))
     env = {
-        "PATH": str(Path(sys.executable).parent) + ":/usr/local/bin:/usr/bin:/bin",
+        "PATH": python_dir + ":/usr/local/bin:/usr/bin:/bin",
         "HOME": str(sandbox),
         "PYTHONDONTWRITEBYTECODE": "1",
     }
     return LocalShellBackend(root_dir=sandbox, virtual_mode=True, inherit_env=False, env=env, timeout=120)
+
+
+def _git_for_windows_root() -> Path | None:
+    """Folder of Git for Windows (the one containing usr/bin/sh.exe), or None."""
+    candidates = []
+    git = shutil.which("git")
+    if git:
+        exe = Path(git).resolve()
+        candidates += [exe.parents[1], exe.parents[2]]
+    for var in ("ProgramFiles", "ProgramFiles(x86)", "LOCALAPPDATA"):
+        base = os.environ.get(var)
+        if base:
+            candidates += [Path(base) / "Git", Path(base) / "Programs" / "Git"]
+    return next((c for c in candidates if (c / "usr" / "bin" / "sh.exe").exists()), None)
+
+
+class _PosixShellBackend(LocalShellBackend):
+    """Windows only: same as LocalShellBackend but commands run with a POSIX `sh -c` instead of cmd.exe.
+
+    Output format, timeout, truncation and exit-code handling follow LocalShellBackend.execute.
+    """
+
+    def __init__(self, *args, sh: str, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._sh = sh
+
+    def execute(self, command: str, *, timeout: int | None = None) -> ExecuteResponse:
+        if not command or not isinstance(command, str):
+            return ExecuteResponse(output="Error: Command must be a non-empty string.", exit_code=1, truncated=False)
+        limit = timeout if timeout is not None else self._default_timeout
+        if limit <= 0:
+            raise ValueError(f"timeout must be positive, got {limit}")
+        try:
+            r = subprocess.run(
+                [self._sh, "-c", command], check=False, capture_output=True, stdin=subprocess.DEVNULL,
+                text=True, encoding="utf-8", errors="replace", timeout=limit, env=self._env, cwd=str(self.cwd),
+            )
+        except subprocess.TimeoutExpired:
+            return ExecuteResponse(output=f"Error: Command timed out after {limit} seconds.", exit_code=124, truncated=False)
+        except Exception as exc:  # noqa: BLE001 - report instead of crashing the agent loop
+            return ExecuteResponse(output=f"Error executing command ({type(exc).__name__}): {exc}", exit_code=1, truncated=False)
+        parts = [r.stdout] if r.stdout else []
+        if r.stderr:
+            parts += [f"[stderr] {line}" for line in r.stderr.strip().split("\n")]
+        output = "\n".join(parts) if parts else "<no output>"
+        truncated = len(output) > self._max_output_bytes
+        if truncated:
+            output = output[: self._max_output_bytes] + f"\n\n... Output truncated at {self._max_output_bytes} bytes."
+        if r.returncode != 0:
+            output = f"{output.rstrip()}\n\nExit code: {r.returncode}"
+        return ExecuteResponse(output=output, exit_code=r.returncode, truncated=truncated)
 
 
 def build_agent(sandbox: Path, mode: str = "single", use_skills: bool = False, model=None):

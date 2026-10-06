@@ -1,0 +1,79 @@
+{
+  "task": "code-eval",
+  "condition": "baseline",
+  "role": "eval",
+  "error": null,
+  "timestamp": "2026-10-06T05:14:35.347758+00:00",
+  "skills_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "seconds": 113.5,
+  "tokens": {
+    "input": 71704,
+    "output": 4060,
+    "total": 75764
+  },
+  "tool_calls": 22,
+  "subagent_calls": 0,
+  "skills_read": 0,
+  "skills_modified": false,
+  "final_message": "[{'id': 'rs_04a10faca14cd0e6006ac484281ac487d0be3d62af1372ca5f', 'summary': [], 'type': 'reasoning', 'content': [], 'encrypted_content': 'gAAAAABqxIQqFydSeCA_qCRnAVtx_AMjAzxXDsjpIA23L40EXH0bYR1mm-VEi4ICPHQOyBU9L7Mwi7m3nWoLSpQhbM-OSLkcKbXJgk3t0y4wZRIFESvSIDIsWmSTJNEBJAlNBY6F_jbFG_sTv3bR9zAuKaIGbmPiVNo5rg-aRaKxzzx5glO7OFRQfUBSI9pBdcASEcyQCHbkR14gnvoOTAiHBX30pTlXW9IdgEckV1KAaH7WmEEhmNO_-9KEE2U457HgQwENHxL63kr688GLl1RQQ-CseggCKAx9Y9DXTBIT-XbC5kmfDr2DtbEJT4W3iT0sEedofpUebAF8WJG60yhnk1P7uXLq5rImpkxKev4eoAxlSI31xpj-F2u6qtfSQy7e026wyWa-xvj0eRNoE_cTC_3dl32cBo-f2POz6JhRT7AXAfVgJ0g6PD1dQZr8M0WYzDyL7IM_ABjncN8wh7x5stF2sOwGM2U5wIp1CmuAp466ZM99nYC3M1SYV5DdRCNRV1ePN-Mg3nExURF3YNWUhbHC-AICC95CRp3xEUr2vUle1QQrknnOhMUktNGYhqKCKeC3UM-7QVrssuSTJUkZpAXRJt-Ayz6gTkaLVu9GudXqbbQ3Oon58vlE4yAqrDwWRPbZP5TIFw3M62I-Qpn1ku9l14mpBF3HOmBNbwtoOvNF7E00hM2ix6Z6pNCQhiom97NPtzBVOCI-nIDvcRGiJf7yhsB7x2BiMuOVsToHJbJm-CGNTT9VZV1S5JuRDYsNHWrAhW979l_pyStmsd2p-vO7cvxhCH7AeluY67KbxC7WDuj6EBY_Huy7wM1EJwdmrNFOUFOttiIZjBu8U5UYaDKP6r62lyr4IKE6W6aWqvNM77pZe1K7N45bD4iWmRlUUoG4qSv0ovUSH968wOgRtqTABm6O5YqqNm-U99e8PMhiXTDyoVUYQPtIfle_JHll2DEqP_672jcmLbWovVnPUskGlpT6flghD9vmIXNDN31JvCmXVKosyydbOFOqI4mlwg0meS9q9L5MmlQFrkF9w0X99ln01zJolXp2Kb9s40w5Q7nDj9lVh8Bt9tx7o08hJPQ1adbocCAqa9hyN8XPQaMiCqonCrfIWcfju0VIo5wS3Ql2z0c6uH0vLEKy3ro0Mfs4o_upY_GCMt9ON8x7srAGFsKyR2IoJY-BN6_dPylWEeXFFIQJLHkUSoooMpyheUkheCjtjn1OaTLxY7tOrwXPqv0DLaVy__Frx9_9BFX_eGFAwe5Up4nFeYwJ-N7yC2fqm2rpjHsuwiH44jXVEo9npKGTHBXEP7IIoh9n3sBB8kLEAmLkWm19JJwjJeNts9gslXCaM6l3-kYfLFw_g7xoq9I5n-W0V_VTRK0w-KVP4qUyql6WZ5IItwmIhlmpF7wOdsOpJD0YzZko2L4GbxBk6U541AOF8km0SHuhzKQRkb6WlCh7s9Ahh5Pi0dEJv7cM-CxWr-p6yUPpZNEGgcRN664lSFepIuln-Pbgby7AKVEN-ucNsDjHlsZesN047MEuw_PNFsbOgdL6k0-B57Ot89zEsL81RKDlPwZ08Be9BEnCcvJVvFY4dVc24XjahNNXmaHvYcaMoggNTUj3PupAeJUBSwQfpQM41hksyNfcawKt-i7FiYw5kwSwGflcDIpkQNq5StPbYpOxgZ-c0FEgk6Nzl5ckzIE-KYpznCV3wxwhyyvZ2-6DlObnTjE7oCZHzJUbzZ51vm-tHPvYY02t5vvQw91OBzCmLTpFlcFkOgcV8wfvaEJm1LWnJLhGuoyvkXlupQIvvTNvmRq3nxiHS_24d7cSyfqttl0JvIyUByDnzSAZq2Gww9VG13p-4Gx9iLqyNgeG-3Eow4YmRi70drrw9A=='}, {'type': 'text', 'text': 'Fixed duration parsing to support all documented formats, changed billing to always round partial blocks up, and made `add_slot` return a new list without shared state or mutating its input. The test suite passes.\\n\\nChanged: `workspace/bookings/billing.py`, `workspace/bookings/schedule.py`, and `workspace/bookings/timeutil.py`.', 'annotations': [], 'id': 'msg_04a10faca14cd0e6006ac48429888487d088f92ff92d3a4ea1', 'phase': 'final_answer'}]",
+  "score": 0.6363636363636364,
+  "passed": 7,
+  "total": 11,
+  "checks": [
+    {
+      "name": "visible_suite_passes",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "tests_not_modified",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "parse_duration_all_formats",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "other_caller_fixed",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "billable_blocks_round_up",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "add_slot_no_shared_state",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "negative_minutes_rejected",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "rule_type_hints",
+      "passed": false,
+      "detail": ""
+    },
+    {
+      "name": "rule_regression_tests",
+      "passed": false,
+      "detail": ""
+    },
+    {
+      "name": "rule_changelog",
+      "passed": false,
+      "detail": ""
+    },
+    {
+      "name": "rule_version_bump",
+      "passed": false,
+      "detail": ""
+    }
+  ]
+}
