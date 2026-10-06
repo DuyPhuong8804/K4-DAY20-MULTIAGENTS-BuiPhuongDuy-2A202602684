@@ -158,7 +158,7 @@ Lần chạy có `error` hoặc `skills_modified = true`: **không có** (`error
 ## 9. Hạn chế và tính hợp lệ
 
 1. **Số mẫu rất nhỏ, mỗi ô chạy một lần.** Có 3 tác vụ đánh giá và mỗi (điều kiện, tác vụ) chỉ chạy một lần, với `temperature=1`. Một check chênh lệch bằng 0,09 đến 0,11 điểm của một tác vụ; điểm trung bình của một điều kiện có thể đổi hơn 0,1 chỉ vì một lần chạy xấu. Ảnh hưởng: mức giảm 0,21 của `subagents` đến từ một lần chạy (logs-eval 1/10) nên không thể phân biệt với nhiễu; chỉ kết luận về token (gấp 3,3 lần, nhất quán ở cả 6 tác vụ) là chắc chắn. Kết luận về `skills-auto` (+0,16) cũng chỉ ở mức gợi ý.
-2. **Chỉ đo nhiễu bằng 3 cặp lặp.** Ở câu 6 mục 8 tôi chỉ có 3 cặp (cùng skill, tác vụ học) và không lặp lại tác vụ đánh giá, nên không tính được khoảng dao động. Điểm giống nhau ở cả 3 cặp không chứng minh điểm ổn định; token đã dao động −22% đến +55%. Ảnh hưởng: hạn chế khả năng nói về độ tin cậy của chênh lệch điểm; hướng 6e (lặp lại ít nhất 2 lần) sẽ giải quyết, nhưng tôi không làm.
+2. **Chỉ đo nhiễu bằng 3 cặp lặp.** Ở câu 6 mục 8 tôi chỉ có 3 cặp (cùng skill, tác vụ học) và không lặp lại tác vụ đánh giá, nên không tính được khoảng dao động. Điểm giống nhau ở cả 3 cặp không chứng minh điểm ổn định; token đã dao động −22% đến +55%. Ảnh hưởng: hạn chế khả năng nói về độ tin cậy của chênh lệch điểm; hướng 6e sẽ giải quyết; tôi đã làm ở phụ lục 6e nhưng với một mô hình khác (gpt-4o-mini), nên nó đo nhiễu của mô hình đó chứ không phải của lần chạy chính.
 3. **Tác vụ do giảng viên thiết kế, có sẵn quy ước và có chủ ý dùng lại.** Điểm "quy ước" là các quy tắc tùy ý của "Acme", và 9/12 check quy ước ở tác vụ đánh giá là quy ước dùng lại từ tác vụ học, được nêu nguyên văn trong `detail`. Việc skill "học" được chúng gần như là sao chép phản hồi, không phải khám phá. Check kỹ thuật đã đạt trần (18/18) ở `baseline` nên không cho thấy được tác động của skill hay subagent lên chất lượng kỹ thuật. Ảnh hưởng: kết quả `skills-auto` có thể chỉ phản ánh việc nhớ quy ước, và không suy rộng cho tác vụ có quy ước chưa từng thấy (đúng như 0/3 check mới).
 4. **Chỉ một mô hình, và cùng mô hình viết skill và thực thi.** Dùng `gpt-6-luna` cho cả curator, tác tử chính và subagent, với `temperature=1` bắt buộc. Ảnh hưởng: kết luận (đặc biệt về hành vi "đọc skill rồi làm theo đề") có thể không chuyển sang mô hình khác; không so sánh được skill do mô hình mạnh hơn viết.
 5. **Chỉ một lần chạy curator và thiết kế subagent do tôi chọn.** Curator ngẫu nhiên: một lần chạy khác có thể cho skill tốt hơn hoặc xấu hơn (bước 3 của skill `typed-package-bugfixes` hẹp hơn quy tắc gốc, một khiếm khuyết có thể không xảy ra ở lần khác). Cấu hình 3 subagent (explorer, implementer, reviewer) là một lựa chọn trong nhiều; một thiết kế khác (ví dụ ép subagent viết script rồi chạy) có thể không gặp lỗi chép tay của logs-eval. Ảnh hưởng: kết luận "đa tác tử không đáng" chỉ đúng cho thiết kế này. Ngoài ra `trace.md` không chứa việc subagent làm bên trong nên cơ chế lỗi của subagent chỉ suy ra được từ lời giao việc và kết quả.
@@ -179,8 +179,62 @@ Lần chạy có `error` hoặc `skills_modified = true`: **không có** (`error
   6. Điền giả thuyết (mục 2); `git commit` (`hypotheses`); `git commit --allow-empty` + `git tag freeze`.
   7. `python -m lab.runner --condition baseline --tasks eval`; `... --condition subagents --tasks eval`; `... --condition skills-auto --tasks all`.
   8. `python scripts/verify_freeze.py` (OK); `python -m lab.compare > report/table.md`; `python scripts/check_breakdown.py`.
-- Thử thách mở rộng: không thực hiện.
+- Thử thách mở rộng: hướng 6e (lặp để đo nhiễu), xem mục "Phụ lục 6e" bên dưới.
 - Ghi chú khác:
   - Lỗi CRLF: `core.autocrlf=true` của Git for Windows đổi `tasks/**` sang CRLF; `check.py` của `code-learn` so băm SHA-256 của tệp test (tính trên bản LF) nên `tests_not_modified` thất bại với mọi lần chạy, và CRLF có thể làm sai dữ liệu log và CSV. Kết quả của lần chạy đầu bị loại và xóa; mọi số liệu trong báo cáo đến từ lần chạy lại sau khi `tasks/` khớp với git (`git ls-files --eol tasks`: `i/lf w/lf`, ngoại trừ `sales.csv` vốn là CRLF trong git).
   - Image phụ có git: `FROM lab-deepagents` + `apt-get install git` (chỉ để chạy `verify_freeze.py` và `check_breakdown.py`, không đưa vào kho).
   - Tôi không sửa `tests/`, `tasks/`, `scripts/` hay các tệp có sẵn; không sửa tay `skills/auto/*/SKILL.md`. `skills/auto/README.md` chỉ được đổi line ending CRLF → LF (nội dung không đổi) để trùng blob git.
+
+## Phụ lục 6e. Lặp để đo nhiễu (thử thách mở rộng, mô hình gpt-4o-mini)
+
+**Thiết kế.** Chạy lại cả 3 điều kiện trên 3 tác vụ đánh giá, 3 lần lặp mỗi ô (27 lần chạy), kết quả nằm riêng trong `results-6e/mini-run1..3/` và không chạm vào `results/`. `skills/auto` giữ nguyên bản đã đóng băng (`skills_modified` đều false). Lệnh: `python -m lab.runner --condition <c> --tasks eval --results results-6e/mini-runN` trong container, rồi `python scripts/aggregate_6e.py > report/table-6e.md`. `temperature=1` như lần chạy chính.
+
+**Khác biệt quan trọng so với yêu cầu gốc.** Theo yêu cầu của tôi, các lần lặp dùng mô hình **gpt-4o-mini**, còn lần chạy chính dùng gpt-6-luna. Vì vậy đây **không phải** lặp lại thí nghiệm chính và không cho biết độ nhiễu của con số 0,60 / 0,39 / 0,76. Nó cho hai thứ khác: (a) độ nhiễu giữa các lần lặp của gpt-4o-mini, và (b) kết quả có giữ được khi đổi sang mô hình yếu hơn hay không. Skill do gpt-6-luna viết, không viết lại cho mô hình mới. Muốn đo nhiễu của lần chạy chính cần lặp lại với gpt-6-luna (chưa làm).
+
+**Số liệu** (tạo bởi `scripts/aggregate_6e.py`; cột "main run" là lần chạy chính của gpt-6-luna, chỉ tác vụ đánh giá):
+
+Repeats: mini-run1, mini-run2, mini-run3 (3 per cell). Scores = share of checks passed.
+
+### Mean score over the evaluation tasks, per repeat
+
+| condition | mini-run1 | mini-run2 | mini-run3 | mean | min-max | sd | main run (other model) |
+|---|---|---|---|---|---|---|---|
+| baseline | 0.06 | 0.06 | 0.14 | 0.09 | 0.06-0.14 | 0.04 | 0.60 |
+| subagents | 0.16 | 0.18 | 0.16 | 0.17 | 0.16-0.18 | 0.01 | 0.39 |
+| skills-auto | 0.06 | 0.17 | 0.21 | 0.15 | 0.06-0.21 | 0.06 | 0.76 |
+
+### Per task: passed/total in each repeat, and mean score
+
+| task | condition | mini-run1 | mini-run2 | mini-run3 | mean | main run |
+|---|---|---|---|---|---|---|
+| code-eval | baseline | 1/11 | 2/11 | 1/11 | 0.12 | 7/11 |
+| code-eval | subagents | 3/11 | 5/11 | 3/11 | 0.33 | 7/11 |
+| code-eval | skills-auto | 1/11 | 1/11 | 2/11 | 0.12 | 9/11 |
+| data-eval | baseline | 0/9 | 0/9 | 2/9 | 0.07 | 5/9 |
+| data-eval | subagents | 0/9 | 0/9 | 1/9 | 0.04 | 4/9 |
+| data-eval | skills-auto | 0/9 | 3/9 | 3/9 | 0.22 | 5/9 |
+| logs-eval | baseline | 1/10 | 0/10 | 1/10 | 0.07 | 6/10 |
+| logs-eval | subagents | 2/10 | 1/10 | 1/10 | 0.13 | 1/10 |
+| logs-eval | skills-auto | 1/10 | 1/10 | 1/10 | 0.10 | 9/10 |
+
+### Cost and behaviour (mean per run)
+
+| condition | tokens (repeats) | tokens (main) | tool calls | subagent calls | runs reading a skill | runs with error |
+|---|---|---|---|---|---|---|
+| baseline | 75,519 | 40,597 | 10.6 | 0.0 | 0/9 | 1/9 |
+| subagents | 139,915 | 134,483 | 10.6 | 0.1 | 0/9 | 1/9 |
+| skills-auto | 59,451 | 63,285 | 9.7 | 0.0 | 0/9 | 0/9 |
+
+Phân tách theo loại check (đếm trên 27 lần chạy; kỹ thuật = 54 check mỗi điều kiện, quy ước = 36): kỹ thuật đạt 8 (baseline), 15 (subagents), 13 (skills-auto); quy ước đạt 0, 1, 0. Lần chạy chính (gpt-6-luna): kỹ thuật 18/18, 12/18, 18/18 và quy ước 0/12, 0/12, 5/12 (mỗi điều kiện chỉ 1 lần chạy).
+
+**Phân tích cơ chế (từ vết).**
+1. **Skill không có tác dụng vì gpt-4o-mini không đọc skill.** `skills_read` = 0/9 ở `skills-auto`, dù `SKILLS_NOTE` bảo đọc `SKILL.md` làm hành động ĐẦU TIÊN. Vết của code-eval và logs-eval bắt đầu bằng `glob`/`read_file` dữ liệu, không bao giờ mở `skills/`. Ở lần chạy chính gpt-6-luna đọc skill 6/6 (học) và đạt 0,76. Do đó chênh lệch giữa `skills-auto` (0,15) và `baseline` (0,09) ở đây không thể quy cho skill; nó nằm trong khoảng dao động.
+2. **Hiệu năng sàn thấp ở phần kỹ thuật, không chỉ quy ước.** Ở logs-eval, check kỹ thuật `entry_count`, `timestamps_utc`, `repeat_counts` đạt 0/9. Trong lần chạy baseline 1, tác tử đọc file log hai trang (150 dòng) rồi `write_file` ghi thẳng `errors.json` mà không chạy một dòng mã nào; tóm tắt cuối vẫn nói đã "parsed" và "saved", kết quả 1/10. Ở skills-auto lần 1, `pip install pytz` thành công nhưng 6 lệnh `python -c` liên tiếp báo lỗi cú pháp (tác tử nhúng cả nội dung log vào chuỗi lệnh), rồi tác tử ghi `{"errors": [], "counts_by_service": {}}`. Nghĩa là mô hình báo cáo thành công trong khi kết quả sai hoặc rỗng.
+3. **Vi phạm quy ước đường dẫn.** Ở code-eval skills-auto lần 1 tác tử đọc `/workspace/bookings/...` (đường dẫn tuyệt đối) dù `PATHS_NOTE` cấm, rồi chỉ có 2 lệnh `edit_file` (`billing.py` và `schedule.py`) và 1 lệnh `execute` trước khi dừng sau 10 tool call; `other_caller_fixed` và `parse_duration_all_formats` đạt 0/3 ở cả 3 điều kiện.
+4. **`subagents` cao nhất ở đây (0,17) nhưng đảo chiều so với lần chạy chính (0,39 < 0,60).** Cải thiện đến chủ yếu từ code-eval (`add_slot_no_shared_state` và `billable_blocks_round_up` đạt 3/3, so với 1/3 và 1/3 ở baseline). Có thể do `implementer` và `reviewer` ép thêm một bước kiểm tra, nhưng 1 lỗi đệ quy (60) và token gần như gấp đôi baseline (139.915 so với 75.519) nên tôi không khẳng định cơ chế; chưa đọc đủ vết của subagent (vết chỉ có luồng chính).
+5. **Nhiễu.** Điểm trung bình theo lần lặp dao động 0,06-0,14 (baseline), 0,16-0,18 (subagents), 0,06-0,21 (skills-auto). Ở cấp tác vụ, nhiễu lớn hơn nhiều: skills-auto/data-eval là 0/9, 3/9, 3/9; baseline/code-eval 1/11, 2/11, 1/11. Với mức dao động này, các chênh lệch giữa điều kiện (tối đa 0,08 giữa các giá trị trung bình) không phân biệt được với nhiễu. Hai trong 27 lần chạy dừng vì `GraphRecursionError` (giới hạn 60), vẫn được chấm.
+
+**Kết luận phụ lục.** (i) Nhiễu giữa các lần lặp là đáng kể ở cấp tác vụ (chênh tới 3 check trên 9). (ii) Phát hiện chính ở lần chạy gpt-6-luna (skill tăng điểm nhờ quy ước dùng lại) **không tái lập** với gpt-4o-mini, vì mô hình này không đọc skill và còn yếu ở phần kỹ thuật; không kết luận gì về thứ hạng giữa các điều kiện ở gpt-4o-mini. Điều này củng cố hạn chế ở mục 9: kết quả phụ thuộc mạnh vào mô hình. (iii) Một mô hình yếu thường báo cáo thành công sai, nên chấm điểm trên tệp (như ở lab) là cần thiết.
+
+**Hạn chế và bước tiếp theo.** Đổi mô hình làm lẫn hai nguồn khác biệt (nhiễu và năng lực mô hình); 3 lần lặp x 3 tác vụ vẫn nhỏ; skill chưa được điều chỉnh cho gpt-4o-mini; vết subagent chưa được kiểm tra. Bước tiếp theo: (a) lặp lại 2-3 lần với gpt-6-luna để có khoảng dao động của lần chạy chính; (b) chạy curator trên vết gpt-4o-mini; (c) thêm bước ép đọc skill (ví dụ kiểm tra `skills_read` trước khi cho làm tác vụ) nếu muốn so sánh skill giữa các mô hình.
+
